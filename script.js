@@ -118,17 +118,17 @@ document.addEventListener('pointerdown', (e) => {
       otherBoardItems.forEach((/** @type {HTMLElement} */ item, i) => {
         item.setAttribute('data-index', i)
 
-        const rect = item.getBoundingClientRect()
+        // const rect = item.getBoundingClientRect()
 
-        item.style.width = rect.width + 'px'
-        item.style.height = rect.height + 'px'
-        item.style.top = rect.top + 'px'
-        item.style.left = rect.left + 'px'
+        // item.style.width = rect.width + 'px'
+        // item.style.height = rect.height + 'px'
+        // item.style.top = rect.top + 'px'
+        // item.style.left = rect.left + 'px'
       })
 
-      otherBoardItems.forEach((item) => {
-        item.style.position = 'fixed'
-      })
+      // otherBoardItems.forEach((item) => {
+      //   item.style.position = 'fixed'
+      // })
 
       // Insert item
       otherItem.parentElement.insertBefore(item, otherItem)
