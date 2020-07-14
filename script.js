@@ -96,6 +96,51 @@ document.addEventListener('pointerdown', (e) => {
     // delete the item from the original board
     // and append it to the target board
     if (!isOnTheSameBoard) {
+      let travelItem = item.nextElementSibling
+
+      const animatedThisBoardItems = []
+
+      while (travelItem) {
+        if (!travelItem.classList.contains('moved')) {
+          animatedThisBoardItems.push(travelItem)
+        }
+
+        travelItem = travelItem.nextElementSibling
+      }
+
+      animatedThisBoardItems.forEach((/** @type {HTMLElement} */ item, i) => {
+        const rect = item.getBoundingClientRect()
+
+        item.style.width = rect.width + 'px'
+        item.style.height = rect.height + 'px'
+        item.style.top = rect.top + 'px'
+        item.style.left = rect.left + 'px'
+      })
+
+      animatedThisBoardItems.forEach((/** @type {HTMLElement} */ item, i) => {
+        item.classList.add('moving')
+        item.style.position = 'fixed'
+        item.style.transform = `translate3d(0, ${-distance}px, 0)`
+        item.style.transitionDelay = `${i * 20}ms`
+
+        item.addEventListener('transitionend', function tec() {
+          item.style.transition = 'none'
+          item.style.transform = 'none'
+          item.style.position = ''
+          item.classList.remove('moving')
+
+          setTimeout(() => {
+            item.removeAttribute('style')
+          }, 0)
+
+          if (i === animatedOtherBoardItems.length - 1) {
+            itemsContainer.style.height = ''
+          }
+
+          item.removeEventListener('transitionend', tec)
+        })
+      })
+
       thisBoard.querySelectorAll('.moved').forEach((
         /** @type {HTMLElement} */ item
       ) => {
@@ -113,25 +158,62 @@ document.addEventListener('pointerdown', (e) => {
 
       item.style.transform = ''
 
-      const otherBoardItems = otherBoard.querySelectorAll('.item')
+      const animatedOtherBoardItems = []
 
-      otherBoardItems.forEach((/** @type {HTMLElement} */ item, i) => {
-        item.setAttribute('data-index', i)
+      travelItem = otherItem
 
-        // const rect = item.getBoundingClientRect()
+      while (travelItem) {
+        animatedOtherBoardItems.push(travelItem)
+        travelItem = travelItem.nextElementSibling
+      }
 
-        // item.style.width = rect.width + 'px'
-        // item.style.height = rect.height + 'px'
-        // item.style.top = rect.top + 'px'
-        // item.style.left = rect.left + 'px'
+      /** @type {HTMLElement} */
+      const itemsContainer = otherItem.closest('.items-container')
+
+      itemsContainer.style.height =
+        itemsContainer.clientHeight + distance + 'px'
+
+      animatedOtherBoardItems.forEach((/** @type {HTMLElement} */ item, i) => {
+        const rect = item.getBoundingClientRect()
+
+        item.style.width = rect.width + 'px'
+        item.style.height = rect.height + 'px'
+        item.style.top = rect.top + 'px'
+        item.style.left = rect.left + 'px'
       })
 
-      // otherBoardItems.forEach((item) => {
-      //   item.style.position = 'fixed'
-      // })
+      animatedOtherBoardItems.forEach((/** @type {HTMLElement} */ item, i) => {
+        item.classList.add('moving')
+        item.style.position = 'fixed'
+        item.style.transform = `translate3d(0, ${distance}px, 0)`
+        item.style.transitionDelay = `${i * 20}ms`
+
+        item.addEventListener('transitionend', function tec() {
+          item.style.transition = 'none'
+          item.style.transform = 'none'
+          item.style.position = ''
+          item.classList.remove('moving')
+
+          setTimeout(() => {
+            item.removeAttribute('style')
+          }, 0)
+
+          if (i === animatedOtherBoardItems.length - 1) {
+            itemsContainer.style.height = ''
+          }
+
+          item.removeEventListener('transitionend', tec)
+        })
+      })
 
       // Insert item
       otherItem.parentElement.insertBefore(item, otherItem)
+
+      const allOtherBoardItems = otherBoard.querySelectorAll('.item')
+
+      allOtherBoardItems.forEach((item, i) => {
+        item.setAttribute('data-index', i)
+      })
     }
 
     const otherIndex = parseInt(otherItem.getAttribute('data-index'))
@@ -229,9 +311,11 @@ document.addEventListener('pointerdown', (e) => {
       }
     }
 
-    setTimeout(() => {
+    otherItem.addEventListener('transitionend', function tec() {
       otherItem.classList.remove('moving')
-    }, 200)
+
+      otherItem.removeEventListener('transitionend', tec)
+    })
   }
 
   window.addEventListener('pointermove', pointerMoveHandler)
