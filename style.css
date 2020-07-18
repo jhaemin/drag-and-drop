@@ -17,6 +17,7 @@ body {
     Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   background-color: #fff;
   height: 100%;
+  overflow-anchor: none;
 }
 
 body.dragging {
@@ -67,7 +68,13 @@ body.dragging .item:hover {
 }
 
 .item .title {
-  font-size: 15px;
+  font-size: 16px;
+}
+
+.item .body {
+  font-size: 16px;
+  margin-top: 10px;
+  color: #808080;
 }
 
 .item.placeholder {

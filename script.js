@@ -3,25 +3,24 @@ document.addEventListener('pointerdown', (e) => {
   const { target } = e
 
   /** @type {HTMLElement} */
-  const item = target.closest('.item')
+  let item = target.closest('.item')
 
   if (!item) {
     return
   }
 
   let thisBoard = item.closest('.board')
+  /** @type {HTMLElement} */
+  let previousOtherItem
 
   /** @type {NodeListOf<HTMLElement>} */
   const thisBoardItems = thisBoard.querySelectorAll('.item')
 
   thisBoardItems.forEach((item, i) => item.setAttribute('data-index', i))
 
-  const {
-    top: originTop,
-    left: originLeft,
-    width,
-    height,
-  } = item.getBoundingClientRect()
+  const itemRect = item.getBoundingClientRect()
+
+  const { top: originTop, left: originLeft, width, height } = itemRect
 
   e.preventDefault()
 
@@ -56,6 +55,8 @@ document.addEventListener('pointerdown', (e) => {
   let destinationItem = item
   let isBefore = true
 
+  const originalDistanct = item.getBoundingClientRect().height + 20
+
   const pointerMoveHandler = (/** @type {PointerEvent} */ e) => {
     /** @type {{ target: HTMLElement }} */
     const { target } = e
@@ -77,10 +78,22 @@ document.addEventListener('pointerdown', (e) => {
       return
     }
 
+    if (item.style.transition) {
+      return
+    }
+
+    previousOtherItem = otherItem
+
     // set the destination item
     destinationItem = otherItem
 
     let distance = item.getBoundingClientRect().height + 20
+
+    if (distance !== originalDistanct) {
+      return
+    }
+
+    console.log(distance)
 
     const hasOtherItemMoved = otherItem.classList.contains('moved')
 
@@ -96,55 +109,88 @@ document.addEventListener('pointerdown', (e) => {
     // delete the item from the original board
     // and append it to the target board
     if (!isOnTheSameBoard) {
-      let travelItem = item.nextElementSibling
+      const previousMovedCards = thisBoard.querySelectorAll('.moved')
 
-      const animatedThisBoardItems = []
+      /** @type {HTMLElement[]} */
+      const animatedOtherItems = []
+
+      let travelItem = otherItem
 
       while (travelItem) {
-        if (!travelItem.classList.contains('moved')) {
-          animatedThisBoardItems.push(travelItem)
-        }
-
+        animatedOtherItems.push(travelItem)
+        travelItem.classList.add('moving')
         travelItem = travelItem.nextElementSibling
       }
 
-      animatedThisBoardItems.forEach((/** @type {HTMLElement} */ item, i) => {
-        const rect = item.getBoundingClientRect()
+      // Now the otherBoard becomes thisBoard
+      thisBoard = otherBoard
 
-        item.style.width = rect.width + 'px'
-        item.style.height = rect.height + 'px'
-        item.style.top = rect.top + 'px'
-        item.style.left = rect.left + 'px'
-      })
+      item.style.transform = ''
 
-      animatedThisBoardItems.forEach((/** @type {HTMLElement} */ item, i) => {
-        item.classList.add('moving')
-        item.style.position = 'fixed'
-        item.style.transform = `translate3d(0, ${-distance}px, 0)`
-        item.style.transitionDelay = `${i * 20}ms`
+      /** @type {HTMLElement} */
+      const otherItemsContainer = otherItem.closest('.items-container')
 
-        item.addEventListener('transitionend', function tec() {
-          item.style.transition = 'none'
-          item.style.transform = 'none'
-          item.style.position = ''
+      otherItemsContainer.clientHeight + distance + 'px'
+
+      // Insert item
+
+      const computedItemStyle = window.getComputedStyle(item)
+      const itemHeight = computedItemStyle.height
+      const itemMinHeight = computedItemStyle.minHeight
+      const itemPadding = computedItemStyle.padding
+      const itemMargin = computedItemStyle.margin
+
+      /** @type {HTMLElement} */
+      const clonedItem = item.cloneNode(true)
+
+      clonedItem.style.minHeight = itemMinHeight
+      clonedItem.style.height = itemHeight
+      clonedItem.style.margin = itemMargin
+      clonedItem.style.padding = itemPadding
+
+      item.parentElement.replaceChild(clonedItem, item)
+
+      item.style.minHeight = '0px'
+      item.style.height = '0px'
+      item.style.margin = '0px'
+      item.style.padding = '0px'
+      item.style.opacity = '0'
+
+      item.style.transition = 'all 200ms ease'
+      clonedItem.style.transition =
+        'min-height 200ms ease, height 200ms ease, padding 200ms ease, margin 200ms ease'
+
+      otherItem.parentElement.insertBefore(item, otherItem)
+
+      item.addEventListener('transitionend', function tec() {
+        animatedOtherItems.forEach((item) => {
           item.classList.remove('moving')
-
-          setTimeout(() => {
-            item.removeAttribute('style')
-          }, 0)
-
-          if (i === animatedOtherBoardItems.length - 1) {
-            itemsContainer.style.height = ''
-          }
-
-          item.removeEventListener('transitionend', tec)
+          item.removeAttribute('style')
         })
+
+        item.removeAttribute('style')
+
+        clonedItem.parentElement.removeChild(clonedItem)
+
+        item.removeEventListener('transitionend', tec)
       })
 
-      thisBoard.querySelectorAll('.moved').forEach((
-        /** @type {HTMLElement} */ item
-      ) => {
-        item.style.transition = 'none'
+      item.getBoundingClientRect()
+
+      item.style.minHeight = itemMinHeight
+      item.style.height = itemHeight
+      item.style.margin = itemMargin
+      item.style.padding = itemPadding
+      item.style.opacity = '0.5'
+
+      clonedItem.style.opacity = '0'
+      clonedItem.style.minHeight = '0px'
+      clonedItem.style.height = '0px'
+      clonedItem.style.margin = '0px'
+      clonedItem.style.padding = '0px'
+
+      previousMovedCards.forEach((/** @type {HTMLElement} */ item) => {
+        // item.style.transition = 'none'
         item.style.transform = ''
         item.classList.remove('moved')
 
@@ -152,62 +198,6 @@ document.addEventListener('pointerdown', (e) => {
           item.removeAttribute('style')
         }, 0)
       })
-
-      // Now the otherBoard becomes thisBoard
-      thisBoard = otherBoard
-
-      item.style.transform = ''
-
-      const animatedOtherBoardItems = []
-
-      travelItem = otherItem
-
-      while (travelItem) {
-        animatedOtherBoardItems.push(travelItem)
-        travelItem = travelItem.nextElementSibling
-      }
-
-      /** @type {HTMLElement} */
-      const itemsContainer = otherItem.closest('.items-container')
-
-      itemsContainer.style.height =
-        itemsContainer.clientHeight + distance + 'px'
-
-      animatedOtherBoardItems.forEach((/** @type {HTMLElement} */ item, i) => {
-        const rect = item.getBoundingClientRect()
-
-        item.style.width = rect.width + 'px'
-        item.style.height = rect.height + 'px'
-        item.style.top = rect.top + 'px'
-        item.style.left = rect.left + 'px'
-      })
-
-      animatedOtherBoardItems.forEach((/** @type {HTMLElement} */ item, i) => {
-        item.classList.add('moving')
-        item.style.position = 'fixed'
-        item.style.transform = `translate3d(0, ${distance}px, 0)`
-        item.style.transitionDelay = `${i * 20}ms`
-
-        item.addEventListener('transitionend', function tec() {
-          item.style.transition = 'none'
-          item.style.transform = 'none'
-          item.style.position = ''
-          item.classList.remove('moving')
-
-          setTimeout(() => {
-            item.removeAttribute('style')
-          }, 0)
-
-          if (i === animatedOtherBoardItems.length - 1) {
-            itemsContainer.style.height = ''
-          }
-
-          item.removeEventListener('transitionend', tec)
-        })
-      })
-
-      // Insert item
-      otherItem.parentElement.insertBefore(item, otherItem)
 
       const allOtherBoardItems = otherBoard.querySelectorAll('.item')
 
@@ -289,6 +279,7 @@ document.addEventListener('pointerdown', (e) => {
         let nextItem = otherItem
 
         while (!nextItem.isSameNode(item)) {
+          console.log(nextItem)
           nextItem.style.transform = `translate3d(0, ${-distance}px, 10px)`
           nextItem.classList.add('moved')
           nextItem = toForward
@@ -301,6 +292,7 @@ document.addEventListener('pointerdown', (e) => {
           : nextItem.previousElementSibling
 
         while (nextItem) {
+          console.log(nextItem)
           nextItem.style.transform = ''
           nextItem.classList.remove('moved')
 
@@ -316,6 +308,10 @@ document.addEventListener('pointerdown', (e) => {
 
       otherItem.removeEventListener('transitionend', tec)
     })
+
+    setTimeout(() => {
+      otherItem.classList.remove('moving')
+    }, 200)
   }
 
   window.addEventListener('pointermove', pointerMoveHandler)
