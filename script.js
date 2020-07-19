@@ -67,8 +67,15 @@ document.addEventListener('pointerdown', (e) => {
     ghostItem.style.top = `${originTop + offsetY}px`
     ghostItem.style.left = `${originLeft + offsetX}px`
 
-    /** @type {HTMLElement} */
-    const otherItem = target.closest('.item')
+    // /** @type {HTMLElement} */
+    // const otherItem = target.closest('.item')
+    const ghostItemRect = ghostItem.getBoundingClientRect()
+    const otherItem = document
+      .elementFromPoint(
+        ghostItemRect.left + ghostItemRect.width / 2,
+        ghostItemRect.top + ghostItemRect.height / 2
+      )
+      .closest('.item')
 
     if (!otherItem || otherItem.isSameNode(item)) {
       return
