@@ -55,7 +55,7 @@ document.addEventListener('pointerdown', (e) => {
   let destinationItem = item
   let isBefore = true
 
-  const originalDistanct = item.getBoundingClientRect().height + 20
+  const originalDistance = item.getBoundingClientRect().height + 20
 
   const pointerMoveHandler = (/** @type {PointerEvent} */ e) => {
     /** @type {{ target: HTMLElement }} */
@@ -96,7 +96,7 @@ document.addEventListener('pointerdown', (e) => {
 
     let distance = item.getBoundingClientRect().height + 20
 
-    if (distance !== originalDistanct) {
+    if (distance !== originalDistance) {
       return
     }
 
